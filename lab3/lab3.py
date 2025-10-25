@@ -2,23 +2,23 @@ from PIL import Image
 import numpy as np
 
 
-def rysuj_ramke_w_obrazie_inaczej_na_szaro(obraz, ow=0, oh=0, grb=10, color=0):
-    arr_obraz = np.asarray(obraz).astype(np.uint8)
-    h, w = arr_obraz.shape
+def rysuj_ramki_szare(w, h, grb):
+    ow, oh, color = 0, 0, 0
+    arr = np.ones((h, w), dtype=np.uint8)
     while (h - 2*oh) >= grb:
         for i in range(h-2*oh):
             for j in range(grb):
-                arr_obraz[i+ow][j+ow] = color
+                arr[i+ow][j+ow] = color
             for j in range(w-grb-ow, w-ow):
-                arr_obraz[i+ow][j] = color
+                arr[i+ow][j] = color
         for i in range(grb):
             for j in range(ow+grb, w-grb-ow):
-                arr_obraz[i+oh][j] = color
-                arr_obraz[i+h-grb-oh][j] = color
+                arr[i+oh][j] = color
+                arr[i+h-grb-oh][j] = color
         ow += grb
         oh += grb
         color = (color + 50) % 255
-    return Image.fromarray(arr_obraz)
+    return Image.fromarray(arr)
 
 
 def rysuj_ramke_w_obrazie_ale_na_szaro(obraz, grb):
@@ -49,9 +49,8 @@ def rysuj_pasy_pionowe_szare(w, h, grb):
                 if k % 2:
                     arr[j, i] = color
                 else:
-                    arr[j, i] = 90
-        # obcinam do 200 bo biały(255) razi mocno w oczy
-        color = (color + ile) % 200
+                    arr[j, i] = (i/2+j/2) % 256
+        color = (color + ile) % 256
     return Image.fromarray(arr)
 
 
@@ -75,7 +74,6 @@ def rysuj_ramki_kolorowe(w, kolor, zmiana_koloru_r, zmiana_koloru_g, zmiana_kolo
 def negatyw(obraz):
     if (obraz.mode not in ["L", "1", "RGB"]):
         return -1
-    print(obraz.mode)
     tab_obraz = np.asarray(obraz).astype(np.uint8)
     if (obraz.mode != "RGB"):
         tab_obraz ^= 1
@@ -100,24 +98,52 @@ def rysuj_po_skosie_szare(h, w, a, b):
     return Image.fromarray(tab)
 
 
+def koloruj_w_paski(obraz, grub):
+    t_obraz = np.asarray(obraz)
+    h, w = t_obraz.shape
+    t = (h, w, 3)
+    tab = np.ones(t, dtype=np.uint8)
+    color_r = 127
+    color_g = 0
+    color_b = 100
+    ile = h//grub
+    for k in range(ile):
+        for g in range(grub):
+            i = k * grub + g
+            for j in range(w):
+                if not t_obraz[i, j]:
+                    tab[i, j] = [color_r, color_g, color_b]
+                else:
+                    tab[i, j] = [255, 255, 255]
+        color_r = (color_b + color_g) % 256
+        color_g = (color_r + color_b) % 256
+        color_b = (color_g + color_r) % 256
+
+    return Image.fromarray(tab)
+
+
 def main():
-    # img = Image.open("../tablica.bmp")
-    # img = rysuj_ramke_w_obrazie_ale_na_szaro(img, 10)
-    # img = rysuj_pasy_pionowe(300, 300, 20)
+
+    img = Image.open("../kc.bmp")
+    img = koloruj_w_paski(img, 3)
+    img.save("kc.jpg")
+    img.close()
+
+    # img = Image.open("gwiazdka.bmp")
     # img = negatyw(img)
-    # img = rysuj_ramke_w_obrazie_inaczej_na_szaro(img)
-    # img.show()
-    img = Image.open("gwiazdka.bmp")
-    img = negatyw(img)
-    img.save("gwiazdka_negatyw.bmp")
-    img.close()
-    img = rysuj_ramki_kolorowe(200, [20, 120, 220], 8, 10, -8)
-    img = negatyw(img)
-    img.save("ramki_kolorowe.png")
-    img.close()
-    img = rysuj_po_skosie_szare(100, 300, 8, 10)
-    img.save("szary_skos_negatyw.png")
-    img.close()
+    # img.save("gwiazdka_negatyw.bmp")
+    # img.close()
+
+    # img = rysuj_ramki_kolorowe(200, [20, 120, 220], 8, 10, -8)
+    # img.save("ramki_kolorowe.png")
+    # img = negatyw(img)
+    # img.save("ramki_kolorowe_negatyw.png")
+    # img.close()
+
+    # img = rysuj_po_skosie_szare(100, 300, 8, 10)
+    # img.save("szary_skos.png")
+    # img = negatyw(img)
+    # img.save("szary_skos_negatyw.png")
 
 
 if __name__ == "__main__":
